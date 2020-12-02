@@ -21,19 +21,20 @@ sig Store {
 	AutomaticTicketMachines: some AutomaticTicketMachine,
 	queue: lone Queue,
 
-	maxCustomerCount: one Int
+	maxCustomerCount: one Int,
 	safetyMargin: one Int
 }
 
 sig Department {}
 
 sig Queue {
-	reservations: some Reservation
+	reservations: some Reservation,
+	store: lone Store
 }
 
 sig Reservation {
 	id: one Int,
-	date: one Date
+	date: one Date,
 	time: one Time
 }{
 	id>0
@@ -56,9 +57,26 @@ sig Date{ number: one Int, month: one Int, year: one Int}
 	year > 0
 }
 
-sig Time{ hourse: one Int, minutes: one Int, seconds: one Int}
+sig Time{ hours: one Int, minutes: one Int, seconds: one Int}
 {
 	hours >=0 and hours <= 24 
 	minutes >=0 and minutes <= 60
 	seconds >=0 and seconds <= 60
+}
+
+
+// FACTS
+
+// coorispondence between Store and Queue
+fact StoreQueueOneToOne{
+	all s: Store | one q: Queue | s.queue = q and q.store = Store
+}
+
+// PREDICATES
+
+pred showReservations { 
+	#User = 10
+	#Store = 5 
+	#Queue = 5
+	#Reservation = 50
 }

@@ -1,7 +1,13 @@
 abstract sig User {	
 }
 
-sig Customer extends User {}
+sig Customer extends User {
+	ownOnlineReservations: set OnlineReservation,
+	ownOfflineReservations: set OfflineReservation,
+}{
+	#ownOnlineReservations > 0
+}
+
 sig Manager extends User {
 }{
 	// a Manager User can manage just a Store
@@ -9,52 +15,72 @@ sig Manager extends User {
 }
 
 sig Store {
-	// QRCodeReaders: some QRCodeReader,
-	// StoreDisplays: some StoreDisplay,
-	// AutomaticTicketMachines: some AutomaticTicketMachine,
 	relatedQueue: Queue,
 	relatedManagers: some Manager,
 	relatedDepartments: set Department,
 
-	// maxCustomerCount: Int,
-	// safetyMargin: Int
+	maxCustomerCount: Int,
+	safetyMargin: Int,
 
 	setQrCodeReaders: some QRCodeReader,
 	setStoreDisplays: some StoreDisplay,
 	setAutomaticTicketMachines: some AutomaticTicketMachine
 
+	// storePosition: Position
+
 }{
-	// maxCustomerCount > 0
-	// safetyMargin < maxCustomerCount
+	maxCustomerCount > 0
+	safetyMargin > 0
+	safetyMargin < maxCustomerCount
 }
 
 sig Queue {
-	includedReservations: set Reservation,
+	// includedReservations: set Reservation,
+
+	includedOnlineReservations: set OnlineReservation,
+	includedOfflineReservations: set OfflineReservation
 }{
+	// A Queue must belong to just a Store
 	one this.~relatedQueue
 }
 
-sig Reservation {
-	// id: Int,
-	// date: one Date,
-	// time: one Time
-	customer: Customer,
-//	queue: Queue
+
+abstract sig Reservation {
+	id: Int,
+	date: one Date,
+	time: one Time
 }{
-	// A reservation must be in one and just one queue
-	one this.~includedReservations
-	// id>0
+	id > 0
 }
 
-// sig OfflineReservation extends Reservation {}
-// sig OnlineReservation extends Reservation {}
+sig OfflineReservation extends Reservation {}{ // 
 
+	// A reservation must belong to just a Customer
+	one this.~ownOfflineReservations
+
+	// A reservation must be in one and just one queue
+	one this.~includedOfflineReservations
+
+}
+sig OnlineReservation extends Reservation{}{ //   
+
+	// A reservation must belong to just a Customer
+	one this.~ownOnlineReservations
+
+	// A reservation must be in one and just one queue
+	one this.~includedOnlineReservations
+
+
+}
 
 /*
-abstract sig Position{}
-sig Coordinate extends Position{ latitude: one Float, longitude: one Float }{
+sig Position{ 
+	latitude: one Float, 
+	longitude: one Float 
+}{
 	latitude.beforePoint < 90 and latitude.beforePoint > -90 
 	longitude.beforePoint < 180 and longitude.beforePoint > -180 
+	one this.~storePosition
 }
 
 sig Float{
@@ -62,13 +88,15 @@ sig Float{
 	afterPoint: one Int 
 }{
 	afterPoint>0
+	this.~latitude = 1
+	this.~longitude = 1
 }
 */
 
 
 sig Department {}{
 	// A department belongs only to a specific Store
-	one this.~relatedDepartments
+	lone this.~relatedDepartments
 }
 
 
@@ -92,18 +120,26 @@ sig AutomaticTicketMachine extends StoreHardware{
 	one this.~setAutomaticTicketMachines
 }
 
-sig Date{ number: one Int, month: one Int, year: one Int}
+sig Date{ 
+// 	number: Int, 
+//	month: Int, 
+//	year: Int
+}
 {
-	number > 0 and number <= 31 
-	month > 0 and month <= 12
-	year > 0
+// 	number > 0 and number <= 31 
+// 	month > 0 and month <= 12
+// 	year > 0
 }
 
-sig Time{ hours: one Int, minutes: one Int, seconds: one Int}
+sig Time{
+//	hours: Int, 
+// 	minutes: Int,
+//	seconds: Int
+}
 {
-	hours >=0 and hours <= 24 
+/*	hours >=0 and hours <= 24 
 	minutes >=0 and minutes <= 60
-	seconds >=0 and seconds <= 60
+	seconds >=0 and seconds <= 60*/
 }
 
 // FACTS
@@ -135,29 +171,30 @@ fact{
 
 // A Reservation can belong only to one queue
 fact{	
-//	all r: Reservation, q: Queue | r in q.reservations implies r.queue = q
+	// all r: Reservation, q: Queue | r in q.reservations implies r.queue = q
+}
+
+fact{
+// 	all o: OnlineReservation | some c: Customer | o in c.ownOnlineReservations
+}
+
+fact{
+	// id of reservations are unique
+	no disj r1, r2: Reservation | r1.id = r2.id
 }
 
 
-/*
-fact hardwareForStore{
-	all s:Store | 
-}
-*/
 // PREDICATES
-/*
-pred typicalSituation{
-	#Store = 5
-	#Queue = 5		
-	#Manager = 8	
 
+pred typicalSituation[]{
+	#Store = 5
+	#Queue = 5
+	#Manager = 8	
+	#Department = 20
 	#QRCodeReader = 7
 	#AutomaticTicketMachine = 5	
 	#StoreDisplay = 5
-
-	#Reservation = 50
+	#Customer = 25
 }
-*/
 
-
-run {} for 5
+run {} for 5 but 1 Store, 1 Queue, 4 Customer

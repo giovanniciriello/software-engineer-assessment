@@ -49,9 +49,10 @@ one sig OFFLINE extends ReservationType{}
 
 sig Reservation {
 	id: Int,
-	type: ReservationType
+	type: ReservationType,
 	// date: one Date,
 	// time: one Time
+	referredDepartments: set Department
 }{
 	id > 0
 
@@ -189,6 +190,7 @@ fact{
 }
 
 fact {
+	all r: Reservation | #r.referredDepartments > 0 implies r.type = ONLINE
 	// all r: Reservation, s:Store | s.safetyMargin != r.id && s.maxCustomerCount != r.id
 }
 
@@ -197,6 +199,21 @@ fact {
 
 pred onlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
 	r.type = ONLINE
+	s.relatedQueue = q
+	s.relatedManagers = m
+	r in c.ownReservations
+}
+
+pred onlineUserDoShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
+	r.type = ONLINE
+	s.relatedQueue = q
+	s.relatedManagers = m
+	r in c.ownReservations
+	#Department = 4
+}
+
+pred offlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
+	r.type = OFFLINE
 	s.relatedQueue = q
 	s.relatedManagers = m
 	r in c.ownReservations
@@ -220,4 +237,4 @@ pred offlineUserDoShopping{
 // run {} for 5
 // run {} for 5
 //run {} for 1 Store, 1 Queue, 4 Customer, exactly 2 OfflineReservation, 0 OnlineReservation
-run onlineUserDoShopping for 5
+run offlineUserDoShopping

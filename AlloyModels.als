@@ -2,10 +2,9 @@ abstract sig User {
 }
 
 sig Customer extends User {
-	ownOnlineReservations: set OnlineReservation,
-	ownOfflineReservations: set OfflineReservation,
+	ownReservations: set Reservation
 }{
-	#ownOnlineReservations > 0
+	// #ownOnlineReservations > 0
 }
 
 sig Manager extends User {
@@ -32,36 +31,42 @@ sig Store {
 	maxCustomerCount > 0
 	safetyMargin > 0
 	safetyMargin < maxCustomerCount
+
 }
 
 sig Queue {
 	// includedReservations: set Reservation,
 
-	includedOnlineReservations: set OnlineReservation,
-	includedOfflineReservations: set OfflineReservation
+	includedReservations: set Reservation,
 }{
 	// A Queue must belong to just a Store
 	one this.~relatedQueue
 }
 
+abstract sig ReservationType{}
+one sig ONLINE extends ReservationType{}
+one sig OFFLINE extends ReservationType{}
 
-abstract sig Reservation {
+sig Reservation {
 	id: Int,
-	date: one Date,
-	time: one Time
+	type: ReservationType
+	// date: one Date,
+	// time: one Time
 }{
 	id > 0
-}
-
-sig OfflineReservation extends Reservation {}{ // 
 
 	// A reservation must belong to just a Customer
-	one this.~ownOfflineReservations
+	one this.~ownReservations
 
 	// A reservation must be in one and just one queue
-	one this.~includedOfflineReservations
-
+	one this.~includedReservations
 }
+
+/*
+sig OfflineReservation extends Reservation {}{ // 
+
+
+
 sig OnlineReservation extends Reservation{}{ //   
 
 	// A reservation must belong to just a Customer
@@ -69,9 +74,8 @@ sig OnlineReservation extends Reservation{}{ //
 
 	// A reservation must be in one and just one queue
 	one this.~includedOnlineReservations
-
-
 }
+*/
 
 /*
 sig Position{ 
@@ -96,7 +100,7 @@ sig Float{
 
 sig Department {}{
 	// A department belongs only to a specific Store
-	lone this.~relatedDepartments
+	one this.~relatedDepartments
 }
 
 
@@ -119,7 +123,7 @@ sig AutomaticTicketMachine extends StoreHardware{
 	// a Store Display can be installed in a single Store
 	one this.~setAutomaticTicketMachines
 }
-
+/*
 sig Date{ 
 // 	number: Int, 
 //	month: Int, 
@@ -137,10 +141,11 @@ sig Time{
 //	seconds: Int
 }
 {
-/*	hours >=0 and hours <= 24 
+hours >=0 and hours <= 24 
 	minutes >=0 and minutes <= 60
-	seconds >=0 and seconds <= 60*/
+	seconds >=0 and seconds <= 60
 }
+*/
 
 // FACTS
 
@@ -183,18 +188,36 @@ fact{
 	no disj r1, r2: Reservation | r1.id = r2.id
 }
 
+fact {
+	// all r: Reservation, s:Store | s.safetyMargin != r.id && s.maxCustomerCount != r.id
+}
 
 // PREDICATES
 
-pred typicalSituation[]{
-	#Store = 5
-	#Queue = 5
-	#Manager = 8	
-	#Department = 20
-	#QRCodeReader = 7
-	#AutomaticTicketMachine = 5	
-	#StoreDisplay = 5
-	#Customer = 25
+
+pred onlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
+	r.type = ONLINE
+	s.relatedQueue = q
+	s.relatedManagers = m
+	r in c.ownReservations
 }
 
-run {} for 5 but 1 Store, 1 Queue, 4 Customer
+/*
+pred offlineUserDoShopping{
+	#Store = 1
+	#Queue = 1
+	#Manager = 2
+	#Department = 4
+	#Customer = 1
+	#OnlineReservation = 0
+	#OfflineReservation = 1
+	#QRCodeReader = 1
+	#AutomaticTicketMachine = 1	
+	#StoreDisplay = 1
+}
+*/
+
+// run {} for 5
+// run {} for 5
+//run {} for 1 Store, 1 Queue, 4 Customer, exactly 2 OfflineReservation, 0 OnlineReservation
+run onlineUserDoShopping for 5

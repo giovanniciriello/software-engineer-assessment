@@ -35,9 +35,10 @@ sig Store {
 }
 
 sig Queue {
-	// includedReservations: set Reservation,
 
-	includedReservations: set Reservation,
+	// includedReservations: set Reservation,
+	includedReservations: set Reservation
+
 }{
 	// A Queue must belong to just a Store
 	one this.~relatedQueue
@@ -48,13 +49,13 @@ one sig ONLINE extends ReservationType{}
 one sig OFFLINE extends ReservationType{}
 
 sig Reservation {
-	id: Int,
+	relatedQrCode: QrCode,
 	type: ReservationType,
-	// date: one Date,
-	// time: one Time
+	date: one Date,
+	time: one Time,
+	requestedTimeSlot: lone TimeSlot,
 	referredDepartments: set Department
 }{
-	id > 0
 
 	// A reservation must belong to just a Customer
 	one this.~ownReservations
@@ -62,6 +63,17 @@ sig Reservation {
 	// A reservation must be in one and just one queue
 	one this.~includedReservations
 }
+
+sig QrCode{
+	number: Int
+}{
+	// QrCode Number is non-negative
+	number > 0
+
+	// A QrCode is associated to one and only one Reservation
+	one this.~relatedQrCode
+}
+
 
 /*
 sig OfflineReservation extends Reservation {}{ // 
@@ -124,29 +136,37 @@ sig AutomaticTicketMachine extends StoreHardware{
 	// a Store Display can be installed in a single Store
 	one this.~setAutomaticTicketMachines
 }
-/*
+
 sig Date{ 
-// 	number: Int, 
-//	month: Int, 
-//	year: Int
+ 	// number: Int, 
+	// month: Int, 
+	// year: Int
 }
 {
-// 	number > 0 and number <= 31 
-// 	month > 0 and month <= 12
-// 	year > 0
+ 	// number > 0 && number <= 31 
+ 	// month > 0 && month <= 12
+ 	// year > 0
 }
 
 sig Time{
-//	hours: Int, 
-// 	minutes: Int,
-//	seconds: Int
+	// hours: Int, 
+ 	// minutes: Int,
+	// seconds: Int
 }
 {
-hours >=0 and hours <= 24 
-	minutes >=0 and minutes <= 60
-	seconds >=0 and seconds <= 60
+	// hours >=0 && hours <= 24 
+	// minutes >=0 && minutes <= 60
+	// seconds >=0 && seconds <= 60
 }
-*/
+
+sig TimeSlot{
+	// startHour: Int,
+	// endHour: Int
+}{
+	// startHour >=0 && startHour <= 24
+	// endHour >=0 && endHour <= 24
+	// startHour < endHour
+}
 
 // FACTS
 
@@ -184,15 +204,35 @@ fact{
 // 	all o: OnlineReservation | some c: Customer | o in c.ownOnlineReservations
 }
 
+// id of reservations for QR-code generator are unique
 fact{
-	// id of reservations are unique
-	no disj r1, r2: Reservation | r1.id = r2.id
+	no disj qr1, qr2: QrCode | qr1.number = qr2.number
 }
 
+// Only Online Reservation has, optionally, referred department chosen by user
 fact {
 	all r: Reservation | #r.referredDepartments > 0 implies r.type = ONLINE
-	// all r: Reservation, s:Store | s.safetyMargin != r.id && s.maxCustomerCount != r.id
 }
+
+// Only Online Reservation has, optionally, a time slot chosen by user
+fact {
+	all r: Reservation | #r.requestedTimeSlot = 1 implies r.type = ONLINE
+}
+
+
+// ASSERTION
+assert onlyOnlineReservationHasReferredDepartments { 
+	no r: Reservation | r.type = OFFLINE && #r.referredDepartments > 0
+}
+// check onlyOnlineReservationHasReferredDepartments
+
+
+
+assert onlyOnlineReservationHasRequestedTimeSlot {
+	no r: Reservation | r.type = OFFLINE && #r.requestedTimeSlot > 0
+}
+// check onlyOnlineReservationHasRequestedTimeSlot
+
 
 // PREDICATES
 
@@ -202,6 +242,10 @@ pred onlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Cust
 	s.relatedQueue = q
 	s.relatedManagers = m
 	r in c.ownReservations
+	#Reservation > 2
+	#Department > 0
+	#Time > 2
+
 }
 
 pred onlineUserDoShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
@@ -209,32 +253,18 @@ pred onlineUserDoShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, 
 	s.relatedQueue = q
 	s.relatedManagers = m
 	r in c.ownReservations
-	#Department = 4
+	#Department > 0
 }
 
-pred offlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
-	r.type = OFFLINE
+pred offlineUserDoShopping(s: Store, q: Queue, m:Manager, c: Customer){
 	s.relatedQueue = q
 	s.relatedManagers = m
-	r in c.ownReservations
+	all r: Reservation | r.type = OFFLINE
+	all r: Reservation | r in c.ownReservations
+	#Department > 0
 }
 
-/*
-pred offlineUserDoShopping{
-	#Store = 1
-	#Queue = 1
-	#Manager = 2
-	#Department = 4
-	#Customer = 1
-	#OnlineReservation = 0
-	#OfflineReservation = 1
-	#QRCodeReader = 1
-	#AutomaticTicketMachine = 1	
-	#StoreDisplay = 1
-}
-*/
 
-// run {} for 5
-// run {} for 5
-//run {} for 1 Store, 1 Queue, 4 Customer, exactly 2 OfflineReservation, 0 OnlineReservation
-run offlineUserDoShopping
+run onlineUserDoShopping
+// run onlineUserDoShoppingChosingDepartments
+// run offlineUserDoShopping

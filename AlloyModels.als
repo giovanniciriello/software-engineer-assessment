@@ -54,7 +54,9 @@ sig Reservation {
 	date: one Date,
 	time: one Time,
 	requestedTimeSlot: lone TimeSlot,
-	referredDepartments: set Department
+	referredDepartments: set Department,
+
+	relatedNotifications: set Notification
 }{
 
 	// A reservation must belong to just a Customer
@@ -168,6 +170,20 @@ sig TimeSlot{
 	// startHour < endHour
 }
 
+abstract sig NotificationType{}
+one sig CONNOT extends NotificationType{}
+one sig DELNOT extends NotificationType{}
+one sig WRONOT extends NotificationType{}
+one sig APNOT extends NotificationType{}
+one sig FREENOT extends NotificationType{}
+
+sig Notification{
+	type: NotificationType
+}{
+	// A notification si related to one and only one reservation
+	one this.~relatedNotifications
+}
+
 // FACTS
 
 // corispondence one to one between Store and Queue
@@ -209,6 +225,11 @@ fact{
 	no disj qr1, qr2: QrCode | qr1.number = qr2.number
 }
 
+// Only Online Reservation has related dispatched notifications
+fact {
+	all r: Reservation | #r.relatedNotifications > 0 implies r.type = ONLINE
+}
+
 // Only Online Reservation has, optionally, referred department chosen by user
 fact {
 	all r: Reservation | #r.referredDepartments > 0 implies r.type = ONLINE
@@ -221,17 +242,27 @@ fact {
 
 
 // ASSERTION
+
+// only online reservation has referred departments
 assert onlyOnlineReservationHasReferredDepartments { 
 	no r: Reservation | r.type = OFFLINE && #r.referredDepartments > 0
 }
 // check onlyOnlineReservationHasReferredDepartments
 
 
-
+// only online reservation has requested time slot
 assert onlyOnlineReservationHasRequestedTimeSlot {
 	no r: Reservation | r.type = OFFLINE && #r.requestedTimeSlot > 0
 }
 // check onlyOnlineReservationHasRequestedTimeSlot
+
+
+
+// only online reservation has notifications
+assert onlyOnlineReservationHasNotifications {
+	no r: Reservation | r.type = OFFLINE && #r.relatedNotifications > 0
+}
+check onlyOnlineReservationHasNotifications
 
 
 // PREDICATES
@@ -265,6 +296,8 @@ pred offlineUserDoShopping(s: Store, q: Queue, m:Manager, c: Customer){
 }
 
 
-run onlineUserDoShopping
+// run {} for 10
+
+// run onlineUserDoShopping
 // run onlineUserDoShoppingChosingDepartments
-// run offlineUserDoShopping
+run offlineUserDoShopping

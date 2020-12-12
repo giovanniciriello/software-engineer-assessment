@@ -1,15 +1,13 @@
-abstract sig User {	
-}
+abstract sig User {}
 
 sig Customer extends User {
+
 	ownReservations: set Reservation
-}{
-	// #ownOnlineReservations > 0
+
 }
 
-sig Manager extends User {
-}{
-	// a Manager User can manage just a Store
+sig Manager extends User {}{
+	// a Manager can manage just a Store
 	one this.~relatedManagers
 }
 
@@ -25,18 +23,15 @@ sig Store {
 	setStoreDisplays: some StoreDisplay,
 	setAutomaticTicketMachines: some AutomaticTicketMachine
 
-	// storePosition: Position
-
 }{
 	maxCustomerCount > 0
 	safetyMargin > 0
+	// Safety margin can't be grater or equal than the allowed customer count
 	safetyMargin < maxCustomerCount
-
 }
 
 sig Queue {
 
-	// includedReservations: set Reservation,
 	includedReservations: set Reservation
 
 }{
@@ -49,6 +44,7 @@ one sig ONLINE extends ReservationType{}
 one sig OFFLINE extends ReservationType{}
 
 sig Reservation {
+
 	relatedQrCode: QrCode,
 	type: ReservationType,
 	date: one Date,
@@ -161,14 +157,7 @@ sig Time{
 	// seconds >=0 && seconds <= 60
 }
 
-sig TimeSlot{
-	// startHour: Int,
-	// endHour: Int
-}{
-	// startHour >=0 && startHour <= 24
-	// endHour >=0 && endHour <= 24
-	// startHour < endHour
-}
+sig TimeSlot{}
 
 abstract sig NotificationType{}
 one sig CONNOT extends NotificationType{}
@@ -185,6 +174,8 @@ sig Notification{
 }
 
 // FACTS
+
+/* QUESTA PARTE NON VERRA' INSERITA
 
 // corispondence one to one between Store and Queue
 fact{
@@ -220,6 +211,8 @@ fact{
 // 	all o: OnlineReservation | some c: Customer | o in c.ownOnlineReservations
 }
 
+*/
+
 // id of reservations for QR-code generator are unique
 fact{
 	no disj qr1, qr2: QrCode | qr1.number = qr2.number
@@ -241,7 +234,7 @@ fact {
 }
 
 
-// ASSERTION
+// ASSERTIONS
 
 // only online reservation has referred departments
 assert onlyOnlineReservationHasReferredDepartments { 

@@ -125,13 +125,13 @@ sig QRCodeReader extends StoreHardware{
 
 sig StoreDisplay extends StoreHardware{
 } {
-	// an Automatic Ticket Machine can be installed in a single Store
+	// an Store DisplayMachine can be installed in a single Store
 	one this.~setStoreDisplays
 }
 
 sig AutomaticTicketMachine extends StoreHardware{
 }{
-	// a Store Display can be installed in a single Store
+	// a  Automatic Ticket can be installed in a single Store
 	one this.~setAutomaticTicketMachines
 }
 
@@ -173,7 +173,6 @@ sig Notification{
 	one this.~relatedNotifications
 }
 
-// FACTS
 
 /* QUESTA PARTE NON VERRA' INSERITA
 
@@ -212,6 +211,9 @@ fact{
 }
 
 */
+
+
+// FACTS
 
 // id of reservations for QR-code generator are unique
 fact{
@@ -255,7 +257,7 @@ assert onlyOnlineReservationHasRequestedTimeSlot {
 assert onlyOnlineReservationHasNotifications {
 	no r: Reservation | r.type = OFFLINE && #r.relatedNotifications > 0
 }
-check onlyOnlineReservationHasNotifications
+// check onlyOnlineReservationHasNotifications
 
 
 // PREDICATES
@@ -272,7 +274,10 @@ pred onlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Cust
 
 }
 
-pred onlineUserDoShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
+// run onlineUserDoShopping
+
+
+pred onlineUserDoesShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
 	r.type = ONLINE
 	s.relatedQueue = q
 	s.relatedManagers = m
@@ -280,17 +285,19 @@ pred onlineUserDoShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, 
 	#Department > 0
 }
 
-pred offlineUserDoShopping(s: Store, q: Queue, m:Manager, c: Customer){
+// run onlineUserDoesShoppingChosingDepartments
+
+pred offlineUserDoesShopping(s: Store, q: Queue, m:Manager, c: Customer){
 	s.relatedQueue = q
 	s.relatedManagers = m
 	all r: Reservation | r.type = OFFLINE
 	all r: Reservation | r in c.ownReservations
 	#Department > 0
 }
+run offlineUserDoesShopping
 
 
 // run {} for 10
 
-// run onlineUserDoShopping
-// run onlineUserDoShoppingChosingDepartments
-run offlineUserDoShopping
+
+

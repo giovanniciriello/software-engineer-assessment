@@ -1,5 +1,4 @@
-# Amato / Ciriello / Colombrino
-# Software Engineering 2 R&DD Assignments
+## Software Engineering 2 R&DD Assignments
 
 Students:
 - Amato Nunzio | `10791307`

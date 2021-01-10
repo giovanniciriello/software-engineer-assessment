@@ -60,7 +60,12 @@ sig Reservation {
 
 	// A reservation must be in one and just one queue
 	one this.~includedReservations
+
+	// if the Reservation refers to specific departments
+	// the chosen ones must be departments of the store that owns the relative queue
+	#referredDepartments > 0 implies all d:referredDepartments | d in ((this.~includedReservations).~relatedQueue).relatedDepartments
 }
+	
 
 sig QrCode{
 	number: Int
@@ -72,21 +77,6 @@ sig QrCode{
 	one this.~relatedQrCode
 }
 
-
-/*
-sig OfflineReservation extends Reservation {}{ // 
-
-
-
-sig OnlineReservation extends Reservation{}{ //   
-
-	// A reservation must belong to just a Customer
-	one this.~ownOnlineReservations
-
-	// A reservation must be in one and just one queue
-	one this.~includedOnlineReservations
-}
-*/
 
 /*
 sig Position{ 
@@ -173,46 +163,6 @@ sig Notification{
 	one this.~relatedNotifications
 }
 
-
-/* QUESTA PARTE NON VERRA' INSERITA
-
-// corispondence one to one between Store and Queue
-fact{
-    // all s:Store | one s.~queue
-}
-
-// a Manager User can manage just a Store
-fact{	
-// all s: Store, m: Manager | m in s.managers implies m.mstore = s
-}
-	
-// a QR Code Reader can be installed in a single Store
-fact{	
-	// all s: Store, q: QRCodeReader | q in s.qrCodeReaders implies q.store = s
-}
-
-// an Automatic Ticket Machine can be installed in a single Store
-fact{	
-	// all s: Store, a: AutomaticTicketMachine | a in s.automaticTicketMachines implies a.store = s
-}
-
-// a Store Display can be installed in a single Store
-fact{	
-	// all s: Store, d: StoreDisplay | d in s.storeDisplays implies d.store = s
-}
-
-// A Reservation can belong only to one queue
-fact{	
-	// all r: Reservation, q: Queue | r in q.reservations implies r.queue = q
-}
-
-fact{
-// 	all o: OnlineReservation | some c: Customer | o in c.ownOnlineReservations
-}
-
-*/
-
-
 // FACTS
 
 // id of reservations for QR-code generator are unique
@@ -294,10 +244,10 @@ pred offlineUserDoesShopping(s: Store, q: Queue, m:Manager, c: Customer){
 	all r: Reservation | r in c.ownReservations
 	#Department > 0
 }
-run offlineUserDoesShopping
+// run offlineUserDoesShopping
 
 
-// run {} for 10
+run {} for 10 but exactly 3 Store, 10 Department, exactly 5 Reservation
 
 
 

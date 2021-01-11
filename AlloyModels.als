@@ -211,43 +211,43 @@ assert onlyOnlineReservationHasNotifications {
 
 
 // PREDICATES
+// They aim to show a specific scenario to highlight possible incoherences
 
+pred onlineUserDoShopping(c: Customer, r: Reservation, s: Store){
 
-pred onlineUserDoShopping(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
 	r.type = ONLINE
-	s.relatedQueue = q
-	s.relatedManagers = m
 	r in c.ownReservations
-	#Reservation > 2
-	#Department > 0
-	#Time > 2
+	r in s.relatedQueue.includedReservations
 
 }
 
 // run onlineUserDoShopping
 
 
-pred onlineUserDoesShoppingChosingDepartments(r: Reservation, s: Store, q: Queue, m:Manager, c: Customer){
+pred onlineUserDoesShoppingChosingDepartments(c: Customer, r: Reservation, s: Store){
+	
 	r.type = ONLINE
-	s.relatedQueue = q
-	s.relatedManagers = m
 	r in c.ownReservations
-	#Department > 0
+	r in s.relatedQueue.includedReservations
+	#r.referredDepartments > 0
+
 }
 
 // run onlineUserDoesShoppingChosingDepartments
 
-pred offlineUserDoesShopping(s: Store, q: Queue, m:Manager, c: Customer){
-	s.relatedQueue = q
-	s.relatedManagers = m
-	all r: Reservation | r.type = OFFLINE
-	all r: Reservation | r in c.ownReservations
+pred offlineUserDoesShopping(c: Customer, r: Reservation, s: Store){
+
+	r.type = OFFLINE
+	r in c.ownReservations
+	r in s.relatedQueue.includedReservations
+
+	// we enforce the existence of some departments just to show that they will not be related at any offline reservation
 	#Department > 0
 }
-// run offlineUserDoesShopping
+run offlineUserDoesShopping
 
 
-run {} for 10 but exactly 3 Store, 10 Department, exactly 5 Reservation
+// run {} for 10 but exactly 3 Store, 10 Department, exactly 5 Reservation
 
 
 
